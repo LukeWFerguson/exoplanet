@@ -11,6 +11,7 @@ pandas.set_option('display.max_colwidth', None)
 pandas.options.mode.chained_assignment = None
 
 dataframe = pandas.read_csv('data/kepler_exoplanet_search_results.csv')
+dataframe = dataframe.fillna(0)  # sklearn doesn't like `NaN`
 # print(dataframe.head())
 
 # Factorizing text columns.
@@ -29,18 +30,20 @@ print('Model training...')
 start_time = time.time()
 
 # Training without certain columns.
-# train[train.columns.difference(['rowid', 'kepid', 'kepoi_name', 'kepler_name', 'koi_disposition', 'koi_pdisposition', 'koi_tce_delivname'])]
-model.fit(train[['dec']], train['koi_disposition_num'])
+model.fit(train[train.columns.difference(
+    ['rowid', 'kepid', 'kepoi_name', 'kepler_name', 'koi_disposition', 'koi_pdisposition', 'koi_tce_delivname'])]
+          , train['koi_disposition_num'])
 total = time.time() - start_time
 print('Model trained in ' + str(round(total, 2)) + ' seconds.')
 
 print('Predicting test dataset...')
 start_time = time.time()
-# test['prediction'] = model.predict(test[test.columns.difference(['rowid', 'kepid', 'kepoi_name', 'kepler_name', 'koi_disposition', 'koi_pdisposition', 'koi_tce_delivname', 'koi_disposition'])])
-test['prediction'] = model.predict(test[['dec']])
+test['prediction'] = model.predict(test[test.columns.difference(
+    ['rowid', 'kepid', 'kepoi_name', 'kepler_name', 'koi_disposition', 'koi_pdisposition', 'koi_tce_delivname',
+     'koi_disposition'])])
 total = time.time() - start_time
 print('Test dataset predicted in ' + str(round(total, 2)) + ' seconds.')
 
 print(test[['kepoi_name', 'koi_disposition', 'koi_disposition_num', 'prediction']].head())
-print('The model is right ' + str(
+print('The model is correct ' + str(
     round((len(test[test.koi_disposition_num == test.prediction]) / len(test) * 100), 2)) + '% of the time.')
